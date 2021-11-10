@@ -11,7 +11,7 @@ const exp = require('constants');
 const PORT = process.env.PORT || 3001;
 
 const newRolePrompt = () => {
-    let roles = db.query(`SELECT * FROM `)
+    let roles = db.query(`SELECT * FROM role`)
     return inquirer.prompt([
         {
             type: 'input',
@@ -59,6 +59,7 @@ const newRolePrompt = () => {
 }
 
 const newDepartmentPrompt = () => {
+    let departments = db.query(`SELECT * FROM department`)
     return inquirer.prompt(
         {
             type: 'input',
@@ -81,7 +82,7 @@ const newDepartmentPrompt = () => {
 
 // New employee prompt
 const newEmployeePrompt = () => {
-    let employees = db.query(`SELECT * FROM `)
+    let employees = db.query(`SELECT * FROM employee`)
     return inquirer.prompt([
         {
             type: 'input',
@@ -115,12 +116,15 @@ const newEmployeePrompt = () => {
             message: 'In what department will the new employee be added?',
             choices: []
         }
-    ])
+    ]).then(answer => {
+        Employee.addEmployee(answer);
+        startMenuPrompt();
+    }).catch(err => console.log(err))
 }
 
 // query db to view all Departments
 const allDepartments = () => {
-    const allDpt = db.query('SELECT department.name AS Department', (err, res) => {
+    const allDpt = db.query('select departmentName from department', (err, res) => {
         if (err) throw err
         console.table(allDpt);
     });
