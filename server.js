@@ -1,14 +1,19 @@
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const db = require('./db/connection');
-require('console.table');
+const consoleTable = require('console.table');
+// const express = require('express');
 
 const Department = require('./lib/Department');
 const Employee = require('./lib/Employee');
 const Role = require('./lib/Role');
-const exp = require('constants');
+const { appendFile } = require('fs');
 
-const PORT = process.env.PORT || 3001;
+// const PORT = process.env.PORT || 3001;
+// const app = express();
+
+// app.use(express.urlencoded({ extended: false }));
+// app.use(express.json());
 
 const newRolePrompt = () => {
     let roles = db.query(`SELECT * FROM role`)
@@ -43,7 +48,7 @@ const newRolePrompt = () => {
             type: 'list',
             name: 'department_id',
             message: 'In what department will the new role be added?',
-            choices: ['Marketing', 'Product', 'Customer Experience', 'Human Resources', 'Finance', 'Sales', 'Technology'],
+            choices: [{ name: 'Marketing', value: 1 }, { name: 'Product', value: 2 }, { name: 'Customer Experience', value: 3 }, { name: 'Human Resources', value: 1 }, { name: 'Finance', value: 4 }, { name: 'Sales', value: 5 }, { name: 'Technology', value: 6 }],
             validate: addToDepartment => {
                 if (addToDepartment) {
                     return true;
@@ -53,8 +58,14 @@ const newRolePrompt = () => {
             }
         }
     ]).then(answer => {
-        Role.addRole(answer);
-        startMenuPrompt();
+        const sql = `INSERT INTO role set ?`;
+        db.query(sql, answer, (err, rows) => {
+            if (err) {
+                console.log(err)
+            };
+            console.log(`${rows.affectedRows} role added`)
+            startMenuPrompt();
+        });
     }).catch(err => console.log(err))
 }
 
@@ -63,7 +74,7 @@ const newDepartmentPrompt = () => {
     return inquirer.prompt(
         {
             type: 'input',
-            name: 'name',
+            name: 'departmentName',
             message: 'What department (name) would you like to add?',
             validate: newDepartmentName => {
                 if (newDepartmentName) {
@@ -75,14 +86,21 @@ const newDepartmentPrompt = () => {
             }
         }
     ).then(answer => {
-        Department.addDepartment(answer);
-        startMenuPrompt();
+        const sql = `INSERT INTO department set ?`;
+        db.query(sql, answer, (err, rows) => {
+            if (err) {
+                console.log(err)
+            };
+            console.log(`${rows.affectedRows} department added`)
+            startMenuPrompt()
+        });
     }).catch(err => console.log(err))
 }
 
 // New employee prompt
-const newEmployeePrompt = () => {
-    let employees = db.query(`SELECT * FROM employee`)
+const newEmployee = async () => {
+    let [managers] = await db.promise().query(`SELECT CONCAT(first_name, " ", last_name), id AS value FROM employee`)
+    let [roles] = await db.promise().query(`SELECT title AS name, id AS value FROM role`)
     return inquirer.prompt([
         {
             type: 'input',
@@ -112,33 +130,73 @@ const newEmployeePrompt = () => {
         },
         {
             type: 'list',
-            name: 'department_id',
-            message: 'In what department will the new employee be added?',
-            choices: []
+            name: 'role_id',
+            message: 'What is the Role',
+            choices: roles
+        },
+        {
+            type: 'list',
+            name: 'manager_id',
+            message: 'Who is the manager for this employee?',
+            choices: managers
         }
     ]).then(answer => {
-        Employee.addEmployee(answer);
-        startMenuPrompt();
+        const sql = `INSERT INTO employee set ?`;
+        db.query(sql, answer, (err, rows) => {
+            if (err) {
+                console.log(err)
+            };
+            console.log(`${rows.affectedRows} employee added`)
+            startMenuPrompt();
+        });
+    }).catch(err => console.log(err))
+}
+
+const updateEmployeeRole = async () => {
+    let [employees] = await db.promise().query(`SELECT CONCAT(first_name, " ", last_name) AS name, id AS value FROM employee`)
+    let [roles] = await db.promise().query(`SELECT title AS name, id AS value FROM role`)
+    return inquirer.prompt([
+        {
+            type: 'list',
+            name: 'employee_id',
+            message: 'Who is the employee to be updated?',
+            choices: employees
+        },
+        {
+            type: 'list',
+            name: 'role_id',
+            message: 'What is the Role',
+            choices: roles
+        }
+        
+    ]).then(answer => {
+        const sql = `UPDATE employee set role_id = ? WHERE id = ?`;
+        db.query(sql, [answer.role_id, answer.employee_id], (err, rows) => {
+            if (err) {
+                console.log(err)
+            };
+            console.log(`${rows.affectedRows} employee updated`)
+            startMenuPrompt();
+        });
     }).catch(err => console.log(err))
 }
 
 // query db to view all Departments
 const allDepartments = () => {
-    const allDpt = db.query('select departmentName from department', (err, res) => {
+    db.query('select * from department', (err, res) => {
         if (err) throw err
-        console.table(allDpt);
+        console.table(res);
+        startMenuPrompt();
     });
 
 }
 
 // query db to view all Roles
 const allRoles = () => {
-    db.query('SELECT * FROM role', (err, res) => {
+    let allRls = db.query('SELECT * FROM role', (err, res) => {
         if (err) throw err
-        res.json({
-            message: 'success',
-            data: rows
-        });
+        console.table(res);
+        startMenuPrompt();
     });
 }
 
@@ -146,12 +204,10 @@ const allRoles = () => {
 
 // query db to view all Employees
 const allEmployees = () => {
-    db.query('SELECT * FROM employee', (err, res) => {
+    let allEmp = db.query('SELECT * FROM employee', (err, res) => {
         if (err) throw err
-        res.json({
-            message: 'success',
-            data: rows
-        });
+        console.table(res);
+        startMenuPrompt();
     })
 }
 
@@ -202,5 +258,8 @@ const startMenuPrompt = () => {
     })
 }
 
+// app.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+// });
 
 startMenuPrompt();

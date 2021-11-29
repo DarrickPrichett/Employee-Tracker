@@ -1,4 +1,23 @@
 USE employeeDb;
+
+INSERT INTO department (departmentName)
+VALUES
+    ('marketing'),
+    ('product'),
+    ('customerExperience'),
+    ('humanResources'),
+    ('finance'),
+    ('sales'),
+    ('technology');
+
+INSERT INTO role (title, salary, department_id)
+VALUES
+    ('ceo', 1000000, NULL),
+    ('manager', 300000, 1),
+    ('engineer', 70000, 2),
+    ('intern', 30000, 2);
+
+
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES
   ('Ronald', 'Firbank', 4, 1),
@@ -12,31 +31,15 @@ VALUES
   ('Octavia', 'Butler', 4, 3),
   ('Unica', 'Zurn', 3, 5);
 
-INSERT INTO role (title, salary, department_id)
-VALUES
-    ('ceo', 1000000, NULL),
-    ('manager', 300000, 1),
-    ('engineer', 70000, 2),
-    ('intern', 30000, 2);
     
 
-INSERT INTO department (departmentName)
-VALUES
-    ('marketing'),
-    ('product'),
-    ('customerExperience'),
-    ('humanResources'),
-    ('finance'),
-    ('sales'),
-    ('technology');
-
-INSERT INTO manager (first_name, last_name, role_id)
-VALUES
-  ('Darryl', 'Major', 2),
-  ('Corey', 'Minner', 2),
-  ('Michael', 'Pearl', 2),
-  ('Tracy', 'Hill', 2),
-  ('Lanora', 'Westbrook', 2),
-  ('Carlos', 'Sylvester', 2),
-  ('James', 'Brooks', 2);
+-- INSERT INTO manager (first_name, last_name, role_id)
+-- VALUES
+--   ('Darryl', 'Major', 2),
+--   ('Corey', 'Minner', 2),
+--   ('Michael', 'Pearl', 2),
+--   ('Tracy', 'Hill', 2),
+--   ('Lanora', 'Westbrook', 2),
+--   ('Carlos', 'Sylvester', 2),
+--   ('James', 'Brooks', 2);
 
